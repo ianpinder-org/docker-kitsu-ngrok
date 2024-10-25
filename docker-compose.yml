@@ -15,6 +15,25 @@ x-backend-volumes: &backend_volumes
         - 'tmp:${TMP_DIR:-/tmp/zou}'
 
 services:
+
+    ngrok:
+        # platform: linux/x86_64
+        container_name: ${COMPOSE_PROJECT_NAME}-ngrok
+        image: ngrok/ngrok
+        command:
+            - "http"
+            - "--region"
+            - "eu"
+            - "nginx:80"
+            - "--authtoken"
+            - "${NGROK_AUTHTOKEN}"
+            - "--hostname=gwdoodles.com"
+        networks:
+            - internal
+        restart: on-failure:5
+        depends_on:
+            - nginx
+        
     kitsu:
         <<: [*base, *env]
         container_name: ${COMPOSE_PROJECT_NAME:?}-kitsu
