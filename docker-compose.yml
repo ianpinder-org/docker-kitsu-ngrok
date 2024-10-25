@@ -66,6 +66,8 @@ services:
             - zou-app
             - zou-event
             - zou-jobs
+        networks:
+            - internal
 
     zou-app:
         <<: [*base,*env, *backend_volumes]
@@ -75,6 +77,8 @@ services:
           - db
           - indexer
         command: "gunicorn --error-logfile - --access-logfile - -w 3 -k gevent -b :5000 zou.app:app"
+        networks:
+            - internal
 
     zou-event:
         <<: [*base, *env]
@@ -83,12 +87,16 @@ services:
         depends_on:
           - redis
         command: "gunicorn --error-logfile - --access-logfile - -w 1 -k geventwebsocket.gunicorn.workers.GeventWebSocketWorker -b :5001 zou.event_stream:app"
+        networks:
+            - internal
 
     zou-jobs:
         <<: [*base, *env, *backend_volumes]
         container_name: ${COMPOSE_PROJECT_NAME:?}-zou-jobs
         image: registry.gitlab.com/mathbou/docker-cgwire/zou:${ZOU_VERSION:-latest}
         command: "rq worker -c zou.job_settings"
+        networks:
+            - internal
 
     db:
         <<: *base
@@ -99,6 +107,8 @@ services:
             - ./db/pg_ctl.conf:/etc/postgresql/${DB_VERSION:?}/main/pg_ctl.conf:ro
         environment:
             - POSTGRES_PASSWORD=${DB_PASSWORD:?}
+        networks:
+            - internal
 
     redis:
         <<: *base
@@ -106,6 +116,8 @@ services:
         image: redis:alpine
         volumes:
             - 'redis:/data'
+        networks:
+            - internal
     
     indexer:
         <<: *base
@@ -115,6 +127,8 @@ services:
             - 'indexer:/meili_data'
         environment:
             - MEILI_MASTER_KEY=${INDEXER_KEY:?}
+        networks:
+            - internal
 
 volumes:
     db:
