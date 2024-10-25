@@ -59,9 +59,10 @@ services:
 
 
     kitsu:
+        # platform: linux/x86_64
         <<: [*base, *env]
-        container_name: ${COMPOSE_PROJECT_NAME:?}-kitsu
-        image: registry.gitlab.com/mathbou/docker-cgwire/kitsu:${KITSU_VERSION:-latest}
+        container_name: ${COMPOSE_PROJECT_NAME}-kitsu
+        image: registry.gitlab.com/mathbou/docker-cgwire/kitsu:${KITSU_VERSION}
         depends_on:
             - zou-app
             - zou-event
@@ -70,6 +71,7 @@ services:
             - internal
 
     zou-app:
+        # platform: linux/x86_64
         <<: [*base,*env, *backend_volumes]
         container_name: ${COMPOSE_PROJECT_NAME:?}-zou-app
         image: registry.gitlab.com/mathbou/docker-cgwire/zou:${ZOU_VERSION:-latest}
@@ -81,6 +83,7 @@ services:
             - internal
 
     zou-event:
+        # platform: linux/x86_64
         <<: [*base, *env]
         container_name: ${COMPOSE_PROJECT_NAME:?}-zou-event
         image: registry.gitlab.com/mathbou/docker-cgwire/zou:${ZOU_VERSION:-latest}
@@ -92,8 +95,9 @@ services:
 
     zou-jobs:
         <<: [*base, *env, *backend_volumes]
+        platform: linux/x86_64
         container_name: ${COMPOSE_PROJECT_NAME:?}-zou-jobs
-        image: registry.gitlab.com/mathbou/docker-cgwire/zou:${ZOU_VERSION:-latest}
+        image: registry.gitlab.com/mathbou/docker-cgwire/zou:${ZOU_VERSION:-latest}        
         command: "rq worker -c zou.job_settings"
         networks:
             - internal
