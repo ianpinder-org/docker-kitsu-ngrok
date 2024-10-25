@@ -3,3 +3,11 @@ kitsu-dev/
 kitsu/
 zou-dev/
 zou/
+**/_archive/**
+**/env
+**/.env
+certs/**
+env
+.env
+env
+**/.DS_Store
