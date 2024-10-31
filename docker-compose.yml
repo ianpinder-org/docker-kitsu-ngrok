@@ -134,6 +134,24 @@ services:
         networks:
             - internal
 
+    backup:
+        <<: *env
+        build:
+            args:
+                USER_ID: ${USER_ID}
+                GROUP_ID: ${GROUP_ID}
+            context: ./kitsu-backups  # Assuming Dockerfile is in the current directory
+            dockerfile: Dockerfile
+        container_name: ${COMPOSE_PROJECT_NAME:?}-backups
+        networks:
+            - internal
+        volumes:
+            - previews:/${RSYNC_SRC:?}:ro
+            - nas-backup:/${RSYNC_DEST:?}
+        restart: unless-stopped
+        
+
+
 volumes:
     db:
         name: ${COMPOSE_PROJECT_NAME:?}-db-${DB_VERSION:?}
@@ -145,6 +163,19 @@ volumes:
         name: ${COMPOSE_PROJECT_NAME:?}-tmp
     indexer:
         name: ${COMPOSE_PROJECT_NAME:?}-indexer
+    nas-backup:
+        name: ${COMPOSE_PROJECT_NAME:?}-nas-backup
+        driver: local
+        # driver_opts:
+        #     type: nfs
+        #     o: addr=${NAS_IP},rw
+        #     device: ":/${NAS_SHARED_VOLUME}"
+        driver_opts:
+            type: cifs
+            # o: username=${NAS_USER},password=${NAS_PASS},vers=3.0,uid=${USER_ID},gid=${GROUP_ID},rw
+            o: username=${NAS_USER},password=${NAS_PASS},vers=3.0,rw
+            device: ${NAS_SHARED_VOLUME}
+
         
 networks:
     internal:
