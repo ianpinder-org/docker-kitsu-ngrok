@@ -42,6 +42,11 @@ function check_dependencies(){
     fi
 }
 
+function rebuild_custom_services() {
+     echo "${YELLOW}REBUILD CUSTOM CONTAINERS"
+    docker-compose build --no-cache backup
+}
+
 
 function build_images() {
     echo "${MAGENTA}BUILD CONTAINERS"
@@ -143,6 +148,7 @@ esac
 export ENV_FILE=$SWD/env
 DEVELOP=false
 KEEP_DB=false
+REBUILD_CUSTOM=false
 for i in "$@"; do
     case $i in
         -e=* | --env=*)
@@ -164,6 +170,11 @@ for i in "$@"; do
             echo "${MAGENTA}KEEP DEV DB DATA"
             shift
             ;;
+        --rebuild-custom)
+            REBUILD_CUSTOM=true
+            echo "${MAGENTA}REBUILD CUSTOM IMAGES"
+            shift
+            ;;
         -h | --help)
             echo "
     Usage:
@@ -180,6 +191,7 @@ for i in "$@"; do
 
             --develop           [local, down] Gives access to running code on the host. Clean DB every time it's rebuild.
             --keep-db           [local] Combined with '--develop'. Keep DB data.
+            --rebuild-custom    rebuild custom containers to ensure updates
 
         -h, --help              Show this help
                 "
@@ -206,6 +218,11 @@ source_env ${ENV_FILE}
 
 if $DEVELOP; then
     export COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME}-dev"
+fi
+
+if $REBUILD_CUSTOM; then
+   
+    rebuild_custom_services
 fi
 
 compose_down
