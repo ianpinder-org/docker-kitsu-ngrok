@@ -140,9 +140,9 @@ services:
             args:
                 USER_ID: ${USER_ID}
                 GROUP_ID: ${GROUP_ID}
-            context: ./kitsu-backups  # Assuming Dockerfile is in the current directory
+            context: ./kitsu-backup  # Assuming Dockerfile is in the current directory
             dockerfile: Dockerfile
-        container_name: ${COMPOSE_PROJECT_NAME:?}-backups
+        container_name: ${COMPOSE_PROJECT_NAME:?}-backup
         networks:
             - internal
         volumes:
