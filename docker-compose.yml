@@ -137,20 +137,36 @@ services:
     backup:
         <<: *env
         build:
-            args:
-                USER_ID: ${USER_ID}
-                GROUP_ID: ${GROUP_ID}
+            # args:
+            #     USER_ID: ${USER_ID}
+            #     GROUP_ID: ${GROUP_ID}
             context: ./kitsu-backup  # Assuming Dockerfile is in the current directory
             dockerfile: Dockerfile
         container_name: ${COMPOSE_PROJECT_NAME:?}-backup
         networks:
             - internal
         volumes:
-            - previews:/${RSYNC_SRC:?}:ro
-            - nas-backup:/${RSYNC_DEST:?}
+            - previews:/backup-source:ro
+            - nas-backup:/backup-dest
         restart: unless-stopped
         
-
+    backup-postgres:
+        <<: *env
+        build:
+            context: ./kitsu-backup-db  # Assuming Dockerfile is in the current directory
+            dockerfile: Dockerfile
+        image: postgres:15-alpine  # Use a minimal postgres image
+        environment:
+            - PGPASSWORD=${DB_PASSWORD}
+        networks:
+            - internal
+        volumes:
+            - nas-backup:/backup-dest
+        # entrypoint: ["/bin/sh", "-c"]
+        # command: >
+        #     "pg_dump -h db -U postgres -d targetdb > /opt/zou/backups/db_backup.sql"
+        depends_on:
+            - db
 
 volumes:
     db:
