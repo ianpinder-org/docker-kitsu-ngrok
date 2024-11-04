@@ -45,7 +45,7 @@ function check_dependencies(){
 function rebuild_custom_services() {
     echo "${YELLOW}REBUILD CUSTOM CONTAINERS"
     docker-compose build --no-cache backup
-    docker-compose build --no-cache backup-zou
+    docker-compose build --no-cache backup-db
 }
 
 
