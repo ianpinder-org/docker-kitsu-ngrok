@@ -150,11 +150,12 @@ services:
             - nas-backup:/backup-dest
         restart: unless-stopped
         
-    backup-postgres:
+    backup-db:
         <<: *env
         build:
             context: ./kitsu-backup-db  # Assuming Dockerfile is in the current directory
             dockerfile: Dockerfile
+        container_name: ${COMPOSE_PROJECT_NAME:?}-backup-db
         image: postgres:15-alpine  # Use a minimal postgres image
         environment:
             - PGPASSWORD=${DB_PASSWORD}
