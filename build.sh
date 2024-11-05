@@ -46,6 +46,7 @@ function rebuild_custom_services() {
     echo "${YELLOW}REBUILD CUSTOM CONTAINERS"
     docker-compose build --no-cache backup
     docker-compose build --no-cache backup-db
+    docker-compose build --no-cache custom-events
 }
 
 
