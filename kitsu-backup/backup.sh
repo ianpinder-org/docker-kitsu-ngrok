@@ -4,10 +4,7 @@ echo "RUNING KITSU BACKUP PROCESSES..."
 
 # Step 2: Rsync backup process
 echo "Starting rsync backup..."
-# if [ ! -d "$RSYNC_SRC" ]; then
-#   echo "Source directory $RSYNC_SRC does not exist. Exiting."
-#   exit 1
-# fi
+
 
 # Define the destination directory for the backup
 DEST="/backup-dest/${PREVIEWS_BACKUP_SUBFOLDER}"
@@ -18,4 +15,12 @@ fi
 
 # Run the rsync command
 rsync -av --delete "/backup-source/" "$DEST/"
-echo "Backup completed."
+
+
+if [ $? -eq 0 ]; then
+    echo "Previews backup completed successfully."
+else
+    echo "Previews backup encountered an error."
+fi
+
+
