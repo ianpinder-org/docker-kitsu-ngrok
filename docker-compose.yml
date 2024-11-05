@@ -167,18 +167,23 @@ services:
     backup-db:
         <<: *env
         build:
-            context: ./kitsu-backup-db  # Assuming Dockerfile is in the current directory
+            context: ./kitsu-backup-db 
             dockerfile: Dockerfile
         container_name: ${COMPOSE_PROJECT_NAME:?}-backup-db
         environment:
-            - PGPASSWORD=${DB_PASSWORD}
+            POSTGRES_PASSWORD: ${DB_PASSWORD:?}
+            PGDATABASE: ${BACKUP_DB_DATABASE:?}
+            PGHOST: ${BACKUP_DB_HOST:?}
+            PGPORT: ${BACKUP_DB_PORT:?}
+            PGUSER: ${BACKUP_DB_USERNAME:?}
+            # PGPASSWORD: ${DB_PASSWORD:?}
         networks:
             - internal
         volumes:
             - nas-backup:/backup-dest
         # entrypoint: ["/bin/sh", "-c"]
-        # command: >
-        #     "pg_dump -h db -U postgres -d targetdb > /opt/zou/backups/db_backup.sql"
+        # command:
+        #     "pg_dump -h db -U postgres -d zoudb > /opt/zou/backups/db_backup.sql"
         depends_on:
             - db
 
