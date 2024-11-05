@@ -1,26 +1,25 @@
 # Use Alpine as a base image
-FROM alpine:3.16
+FROM alpine:latest
 
 # Install PostgreSQL client and cron
-RUN apk update && apk add --no-cache postgresql-client cronie
+RUN apk update && apk add --no-cache postgresql-client rsync tzdata
 
-# Create backup and log directories
-RUN mkdir -p /opt/backups && mkdir -p /var/log/cron
 
 # Copy the backup script and cron job
-COPY backup-db.sh /opt/backups/backup-db.sh
-COPY backup-cron /etc/crontabs/root
+COPY ./backup-db.sh /
 
 # Make the backup script executable
-RUN chmod +x /opt/backups/backup-db.sh
+RUN chmod +x /backup-db.sh && \
+    touch /backup.log
 
-# # Start cron in the foreground
-# CMD ["crond", "-f", "-l", "8"]
 
 
 # Configure cron job to run the backup every 2 minutes
-RUN echo "*/2 * * * * /backup.sh >> /var/log/backup.log 2>&1" > /etc/crontabs/root
-# RUN echo "0 1,13 * * * /backup.sh >> /var/log/backup.log 2>&1" > /etc/crontabs/root
+# RUN echo "*/2 * * * * /backup-db.sh >> /backup.log 2>&1" > /etc/crontabs/root
+RUN echo "0 0,6,12,18 * * * /backup-db.sh >> /backup.log 2>&1" > /etc/crontabs/root
+
+
 
 # Start cron daemon and tail log in foreground to capture logs in stdout and stderr
-CMD ["sh", "-c", "crond -f -l 8 & tail -f /var/log/backup.log"]
+CMD ["sh", "-c", "crond -f -l 8 > /backup.log 2>&1 & tail -f /backup.log"]
+
