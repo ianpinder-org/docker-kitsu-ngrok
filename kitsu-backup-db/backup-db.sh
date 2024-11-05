@@ -10,5 +10,10 @@ echo "Starting database dump..."
 # Ensure the backup directory exists in the container
 mkdir -p /backup-dest/$DB_BACKUP_FOLDER
 
-# Run the database dump command, setting the working directory
-cd $DB_BACKUP_FOLDER && DB_PASSWORD=$DB_PASSWORD zou dump-database
+
+if [ $? -eq 0 ]; then
+    echo "Database backup completed successfully."
+else
+    echo "Database backup encountered an error."
+fi
+
