@@ -158,7 +158,7 @@ services:
         networks:
             - internal
         volumes:
-            - previews:/backup-source:ro
+            - previews:/backup-source
             - nas-backup:/backup-dest
         restart: unless-stopped
         
