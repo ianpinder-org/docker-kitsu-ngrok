@@ -17,7 +17,6 @@ x-backend-volumes: &backend_volumes
 services:
 
     ngrok:
-        # platform: linux/x86_64
         <<: *env
         container_name: ${COMPOSE_PROJECT_NAME}-ngrok
         image: ngrok/ngrok
@@ -59,7 +58,6 @@ services:
         entrypoint: ["/usr/local/bin/copy_certs.sh"]
             
     kitsu:
-        # platform: linux/x86_64
         <<: [*base, *env]
         container_name: ${COMPOSE_PROJECT_NAME}-kitsu
         image: registry.gitlab.com/mathbou/docker-cgwire/kitsu:${KITSU_VERSION}
@@ -71,7 +69,6 @@ services:
             - internal
 
     zou-app:
-        # platform: linux/x86_64
         <<: [*base,*env, *backend_volumes]
         container_name: ${COMPOSE_PROJECT_NAME:?}-zou-app
         image: registry.gitlab.com/mathbou/docker-cgwire/zou:${ZOU_VERSION:-latest}
@@ -83,7 +80,6 @@ services:
             - internal
 
     zou-event:
-        # platform: linux/x86_64
         <<: [*base, *env]
         container_name: ${COMPOSE_PROJECT_NAME:?}-zou-event
         image: registry.gitlab.com/mathbou/docker-cgwire/zou:${ZOU_VERSION:-latest}
@@ -137,10 +133,7 @@ services:
     backup:
         <<: *env
         build:
-            # args:
-            #     USER_ID: ${USER_ID}
-            #     GROUP_ID: ${GROUP_ID}
-            context: ./kitsu-backup  # Assuming Dockerfile is in the current directory
+            context: ./kitsu-backup 
             dockerfile: Dockerfile
         container_name: ${COMPOSE_PROJECT_NAME:?}-backup
         networks:
@@ -156,7 +149,6 @@ services:
             context: ./kitsu-backup-db  # Assuming Dockerfile is in the current directory
             dockerfile: Dockerfile
         container_name: ${COMPOSE_PROJECT_NAME:?}-backup-db
-        image: postgres:15-alpine  # Use a minimal postgres image
         environment:
             - PGPASSWORD=${DB_PASSWORD}
         networks:
