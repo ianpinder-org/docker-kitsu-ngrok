@@ -187,6 +187,28 @@ services:
         depends_on:
             - db
 
+    custom-events:
+        <<: *env
+        build:
+            context: ./kitsu-custom-events
+            dockerfile: Dockerfile
+        container_name: ${COMPOSE_PROJECT_NAME}-custom-events
+        networks:
+            - internal
+        restart: always
+        tty: true
+        # environment:
+        #     KITSU_URL: ${EVENTS_KITSU_URL}
+        #     KITSU_LOGIN: ${EVENTS_KITSU_LOGIN}
+        #     KITSU_PASSWORD: ${EVENTS_KITSU_PASSWORD}
+        #     EXCLUDE_EVENTS: ${EVENTS_EXCLUDE_EVENTS}
+        #     LANG: ${EVENTS_LANG}
+        depends_on:
+            - zou-app
+            - zou-event
+            - zou-jobs
+            - kitsu
+
 volumes:
     db:
         name: ${COMPOSE_PROJECT_NAME:?}-db-${DB_VERSION:?}
