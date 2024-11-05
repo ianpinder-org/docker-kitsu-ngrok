@@ -6,8 +6,16 @@ RUN apk update && apk add --no-cache rsync tzdata
 
 RUN touch /var/log/slack-set-notifications.log
 
-# Copy backup script to container
+RUN python3 -m venv /opt/venv
+
+COPY ./requirements.txt requirements.txt
 COPY ./slack-set-notifications.sh /
+
+RUN . /opt/venv/bin/activate && pip install -r requirements.txt
+
+
+
+# CMD . /opt/venv/bin/activate && exec python kitsu-events.py
 
 # Configure cron job to run the backup
 RUN echo "0 9,12,15,18,21,0 * * * /slack-set-notifications.sh >> /var/log/slack-set-notifications.log 2>&1" > /etc/crontabs/root
