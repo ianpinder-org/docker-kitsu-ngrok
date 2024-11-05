@@ -185,6 +185,19 @@ services:
         depends_on:
             - db
 
+    slack-notifications:
+        <<: *env
+        build:
+            context: ./kitsu-slack-notifications
+            dockerfile: Dockerfile
+        container_name: ${COMPOSE_PROJECT_NAME:?}-slack-notifications
+        networks:
+            - internal
+        # volumes:
+        #     - previews:/backup-source
+        #     - nas-backup:/backup-dest
+        restart: unless-stopped
+
     custom-events:
         <<: *env
         build:
