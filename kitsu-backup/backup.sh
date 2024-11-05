@@ -14,7 +14,9 @@ if [ ! -d "$DEST" ]; then
 fi
 
 # Run the rsync command
-rsync -av --delete "/backup-source/" "$DEST/"
+# rsync -av --delete "/backup-source/" "$DEST/"
+rsync -av "/backup-source/" "$DEST/"
+
 
 
 if [ $? -eq 0 ]; then
