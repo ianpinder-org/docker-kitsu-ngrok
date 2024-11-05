@@ -68,14 +68,35 @@ services:
         networks:
             - internal
 
+    # zou-app:
+    #     <<: [*base,*env, *backend_volumes]
+    #     container_name: ${COMPOSE_PROJECT_NAME:?}-zou-app
+    #     image: registry.gitlab.com/mathbou/docker-cgwire/zou:${ZOU_VERSION:-latest}
+    #     depends_on:
+    #         - db
+    #         - indexer
+    #     command: "gunicorn --error-logfile - --access-logfile - -w 3 -k gevent -b :5000 zou.app:app"
+    #     volumes:
+    #         - event-handlers:${EVENT_HANDLERS_FOLDER:?}
+    #     networks:
+    #         - internal
+
     zou-app:
         <<: [*base,*env, *backend_volumes]
         container_name: ${COMPOSE_PROJECT_NAME:?}-zou-app
-        image: registry.gitlab.com/mathbou/docker-cgwire/zou:${ZOU_VERSION:-latest}
+        # image: registry.gitlab.com/mathbou/docker-cgwire/zou:${ZOU_VERSION:-latest}
+        build:
+            args:
+                ZOU_VERSION: ${ZOU_VERSION}
+                EVENT_HANDLERS_FOLDER: ${EVENT_HANDLERS_FOLDER}
+            context: ./kitsu-zou-custom
+            dockerfile: Dockerfile
         depends_on:
           - db
           - indexer
         command: "gunicorn --error-logfile - --access-logfile - -w 3 -k gevent -b :5000 zou.app:app"
+        # volumes:
+        #     - event-handlers:${EVENT_HANDLERS_FOLDER:?}
         networks:
             - internal
 
