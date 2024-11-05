@@ -2,7 +2,7 @@
 FROM alpine:latest
 
 # Install rsync and cron
-RUN apk add --no-cache rsync tzdata
+RUN apk update && apk add --no-cache rsync tzdata
 
 RUN touch /var/log/backup.log
 
