@@ -18,8 +18,4 @@ RUN mkdir -p "$EVENT_HANDLERS_FOLDER" \
 COPY ./kitsu-event-handlers/. "$EVENT_HANDLERS_FOLDER"
 
 
-# CMD ["gunicorn", "--error-logfile", "-", "--access-logfile", "-", "-w 3 -k gevent", "-b", ":5000 zou.app:app"]
 
-# CMD ["sh", "-c", "crond -f -l 8 & tail -f /var/log/backup.log"]
-
-# CMD "gunicorn --error-logfile - --access-logfile - -w 3 -k gevent -b :5000 zou.app:app"
