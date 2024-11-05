@@ -47,6 +47,7 @@ function rebuild_custom_services() {
     docker-compose build --no-cache backup
     docker-compose build --no-cache backup-db
     docker-compose build --no-cache custom-events
+    docker-compose build --no-cache slack-notifications
 }
 
 
