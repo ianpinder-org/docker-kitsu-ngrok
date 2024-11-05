@@ -11,6 +11,19 @@ echo "Starting database dump..."
 mkdir -p /backup-dest/$DB_BACKUP_FOLDER
 
 
+# Define the destination directory for the backup
+DEST="/backup-dest/${DB_BACKUP_SUBFOLDER}"
+if [ ! -d "$DEST" ]; then
+  echo "Creating backup destination $DEST."
+  mkdir -p "$DEST"
+fi
+
+cd /backup-dest/$DB_BACKUP_SUBFOLDER
+
+# Run the pg_dump command with the dynamically generated filename
+PGPASSWORD=$DB_PASSWORD pg_dump -h $BACKUP_DB_HOST -U $BACKUP_DB_USERNAME -d $BACKUP_DB_DATABASE > "$DEST/gwkitsu_db_backup_$CURRENT_DATETIME.sql"
+
+
 if [ $? -eq 0 ]; then
     echo "Database backup completed successfully."
 else
