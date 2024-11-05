@@ -6,7 +6,7 @@ import datetime
 import messages
 
 # variables
-KITSU_URL = os.environ['KITSU_URL']
+STANDARD_KITSU_URL = os.environ['STANDARD_KITSU_URL']
 EVENTS_KITSU_URL = os.environ['EVENTS_KITSU_URL']
 EVENTS_KITSU_LOGIN = os.environ['EVENTS_KITSU_LOGIN']
 EVENTS_KITSU_PASSWORD = os.environ['EVENTS_KITSU_PASSWORD']
@@ -19,10 +19,12 @@ excludeList = [n.strip() for n in excludeList]
 EVENTS_LANG = os.environ['EVENTS_LANG']
 
 # init gazu
-gazu.client.set_host(EVENTS_KITSU_URL + "/api")
+# gazu.client.set_host(STANDARD_KITSU_URL + "/api")
+gazu.client.set_host(STANDARD_KITSU_URL)
 gazu.log_in(EVENTS_KITSU_LOGIN, EVENTS_KITSU_PASSWORD)
 # gazu.set_token (KITSU_EVENTS_TOKEN)
-gazu.set_event_host(EVENTS_KITSU_URL + "/socket.io")
+# gazu.set_event_host(EVENTS_KITSU_URL + "/socket.io")
+gazu.set_event_host(EVENTS_KITSU_URL)
 
 
 def rtw(data):
@@ -190,21 +192,34 @@ def lock(data):
                     if tsk["task_status_id"] != done["id"]:
                         gazu.task.add_comment(task["id"], todo, messages.say(EVENTS_LANG, "cant_skip"))
 
+def new_preview_callback (data):
+    print("New preview uploaded..")
+
+    # debug
+    print(json.dumps(data))
+
     
 
 # main callback - collection of callbacks
 def callbacks(data):
-    if "rtw" not in excludeList:
-        rtw(data)
 
-    if "delta" not in excludeList:
-        delta(data)
+    print("Task status changed - placeholder function..")
 
-    if "lock" not in excludeList:
-        lock(data)
+    # debug
+    print(json.dumps(data))
+
+    # if "rtw" not in excludeList:
+    #     rtw(data)
+
+    # if "delta" not in excludeList:
+    #     delta(data)
+
+    # if "lock" not in excludeList:
+    #     lock(data)
 
 # main
 if __name__ == "__main__":
     event_client = gazu.events.init(logger=True)
     gazu.events.add_listener(event_client, "task:status-changed", callbacks)
+    gazu.events.add_listener(event_client, "preview-file:add-file", new_preview_callback)
     gazu.events.run_client(event_client)
