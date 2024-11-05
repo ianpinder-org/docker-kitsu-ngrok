@@ -1,5 +1,3 @@
-# version: '3.5'
-
 x-base: &base
     restart: always
     networks:
@@ -92,8 +90,8 @@ services:
             context: ./kitsu-zou-custom
             dockerfile: Dockerfile
         depends_on:
-          - db
-          - indexer
+            - db
+            - indexer
         command: "gunicorn --error-logfile - --access-logfile - -w 3 -k gevent -b :5000 zou.app:app"
         # volumes:
         #     - event-handlers:${EVENT_HANDLERS_FOLDER:?}
