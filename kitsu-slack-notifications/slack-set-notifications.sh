@@ -2,7 +2,7 @@
 
 echo "Starting Slack notifications scheduled setup..."
 echo ""
-echo "Placholder function - not yet implemented
+echo "Placholder function - not yet implemented"
 
 
 

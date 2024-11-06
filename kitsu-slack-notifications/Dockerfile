@@ -6,7 +6,7 @@ RUN apk update && apk add --no-cache rsync tzdata
 
 RUN touch /var/log/slack-set-notifications.log
 
-RUN python3 -m venv /opt/venv
+RUN python -m venv /opt/venv
 
 COPY ./requirements.txt requirements.txt
 COPY ./slack-set-notifications.sh /
