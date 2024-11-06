@@ -26,6 +26,7 @@ gazu.log_in(EVENTS_KITSU_LOGIN, EVENTS_KITSU_PASSWORD)
 # gazu.set_event_host(EVENTS_KITSU_URL + "/socket.io")
 gazu.set_event_host(EVENTS_KITSU_URL)
 
+REVIEW_STATUS_CODE = "review"
 
 def rtw(data):
     print("rtw (ready for work) started..")
@@ -195,6 +196,29 @@ def lock(data):
 def new_preview_callback (data):
     print("New preview uploaded..")
     print(json.dumps(data))
+
+    try:
+
+        task_id = data["task_id"]
+
+        curr_status_name = data["status"]
+
+        if curr_status_name == REVIEW_STATUS_CODE:
+            return
+
+        task = gazu.client.get("data/tasks/" + data["task_id"])
+        review_status = gazu.task.get_task_status_by_short_name(REVIEW_STATUS_CODE) 
+
+
+        gazu.task.add_comment(task["id"], review_status, messages.say(EVENTS_LANG, "preview_update"))
+
+
+
+    except Exception as e:
+        print ("Error processing automatic status change for new preview")
+        print (e)
+        return
+    
 
     
 
