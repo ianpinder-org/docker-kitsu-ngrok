@@ -220,6 +220,20 @@ services:
             - zou-jobs
             - kitsu
 
+    cleanup:
+        <<: *env
+        build:
+            context: ./kitsu-cleanup 
+            dockerfile: Dockerfile
+        container_name: ${COMPOSE_PROJECT_NAME:?}-cleanup
+        networks:
+            - internal
+        volumes:
+            - previews:/backup-source
+            - nas-backup:/backup-dest
+            - tmp:/opt/zou/tmp
+        restart: unless-stopped
+
 volumes:
     db:
         name: ${COMPOSE_PROJECT_NAME:?}-db-${DB_VERSION:?}
