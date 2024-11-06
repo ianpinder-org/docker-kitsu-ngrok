@@ -194,8 +194,6 @@ def lock(data):
 
 def new_preview_callback (data):
     print("New preview uploaded..")
-
-    # debug
     print(json.dumps(data))
 
     
