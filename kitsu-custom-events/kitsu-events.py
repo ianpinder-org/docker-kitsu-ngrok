@@ -194,24 +194,29 @@ def lock(data):
                         gazu.task.add_comment(task["id"], todo, messages.say(EVENTS_LANG, "cant_skip"))
 
 def new_preview_callback (data):
-    print("New preview uploaded..")
+    print("\nNew preview uploaded..\n")
     print(json.dumps(data))
 
     try:
 
         task_id = data["task_id"]
+        print (f"task_id: {task_id}")
 
-        curr_status_name = data["status"]
+        prev_comm_id = data["comment_id"]
+        prev_comm = gazu.task.get_comment(prev_comm_id)
 
-        if curr_status_name == REVIEW_STATUS_CODE:
-            return
+        print ("preview comment item data:")
+        print (json.dumps(prev_comm))
 
-        task = gazu.client.get("data/tasks/" + data["task_id"])
+        prev_comm_status_id = prev_comm["task_status_id"]
         review_status = gazu.task.get_task_status_by_short_name(REVIEW_STATUS_CODE) 
 
 
-        gazu.task.add_comment(task["id"], review_status, messages.say(EVENTS_LANG, "preview_update"))
+        if prev_comm_status_id == review_status["id"]:
+            print ("Review status already correctly set for new preview")
+            return
 
+        gazu.task.add_comment(task_id, review_status, messages.say(EVENTS_LANG, "preview_update"))
 
 
     except Exception as e:
