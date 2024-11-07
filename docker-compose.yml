@@ -12,10 +12,18 @@ x-backend-volumes: &backend_volumes
         - 'previews:${PREVIEW_FOLDER:-/opt/zou/previews}'
         - 'tmp:${TMP_DIR:-/tmp/zou}'
 
+x-logrotate-base: &logrotate
+    logging:
+        driver: "json-file"
+        options:
+            max-size: "100m"
+            max-file: "5"
+            compress: "true"
+
 services:
 
     ngrok:
-        <<: *env
+        <<: [*env, *logrotate]
         container_name: ${COMPOSE_PROJECT_NAME}-ngrok
         image: ngrok/ngrok
         command:
@@ -33,7 +41,7 @@ services:
             - nginx
         
     nginx:
-        <<: *env
+        <<: [*env, *logrotate]
         image: nginx:latest
         container_name: ${COMPOSE_PROJECT_NAME}-nginx-proxy
         volumes:
@@ -41,13 +49,11 @@ services:
         - ./nginx.default.conf:/etc/nginx/conf.d/default.conf:ro
         - ./certs:/etc/letsencrypt/live:ro
         - ./copy_certs.sh:/usr/local/bin/copy_certs.sh:ro
-
         ports:
             - "80:80"
             - "443:443"
         networks:
             - internal
-
         depends_on:
             - zou-app
             - zou-event
@@ -56,7 +62,7 @@ services:
         entrypoint: ["/usr/local/bin/copy_certs.sh"]
             
     kitsu:
-        <<: [*base, *env]
+        <<: [*base, *env, *logrotate]
         container_name: ${COMPOSE_PROJECT_NAME}-kitsu
         image: registry.gitlab.com/mathbou/docker-cgwire/kitsu:${KITSU_VERSION}
         depends_on:
@@ -80,7 +86,7 @@ services:
     #         - internal
 
     zou-app:
-        <<: [*base,*env, *backend_volumes]
+        <<: [*base,*env, *backend_volumes, *logrotate]
         container_name: ${COMPOSE_PROJECT_NAME:?}-zou-app
         # image: registry.gitlab.com/mathbou/docker-cgwire/zou:${ZOU_VERSION:-latest}
         build:
@@ -99,7 +105,7 @@ services:
             - internal
 
     zou-event:
-        <<: [*base, *env]
+        <<: [*base, *env, *logrotate]
         container_name: ${COMPOSE_PROJECT_NAME:?}-zou-event
         image: registry.gitlab.com/mathbou/docker-cgwire/zou:${ZOU_VERSION:-latest}
         depends_on:
@@ -109,7 +115,7 @@ services:
             - internal
 
     zou-jobs:
-        <<: [*base, *env, *backend_volumes]
+        <<: [*base, *env, *backend_volumes, *logrotate]
         platform: linux/x86_64
         container_name: ${COMPOSE_PROJECT_NAME:?}-zou-jobs
         image: registry.gitlab.com/mathbou/docker-cgwire/zou:${ZOU_VERSION:-latest}        
@@ -118,7 +124,7 @@ services:
             - internal
 
     db:
-        <<: *base
+        <<: [*base, *logrotate]
         container_name: ${COMPOSE_PROJECT_NAME:?}-db-${DB_VERSION:?}
         image: postgres:${DB_VERSION:?}-alpine
         volumes:
@@ -130,7 +136,7 @@ services:
             - internal
 
     redis:
-        <<: *base
+        <<: [*base, *logrotate]
         container_name: ${COMPOSE_PROJECT_NAME:?}-redis
         image: redis:alpine
         volumes:
@@ -139,7 +145,7 @@ services:
             - internal
     
     indexer:
-        <<: *base
+        <<: [*base, *logrotate]
         container_name: ${COMPOSE_PROJECT_NAME:?}-indexer
         image: getmeili/meilisearch:${INDEXER_VERSION:?}
         volumes:
@@ -150,7 +156,7 @@ services:
             - internal
 
     backup:
-        <<: *env
+        <<: [*env, *logrotate]
         build:
             context: ./kitsu-backup 
             dockerfile: Dockerfile
@@ -163,7 +169,7 @@ services:
         restart: unless-stopped
         
     backup-db:
-        <<: *env
+        <<: [*env, *logrotate]
         build:
             context: ./kitsu-backup-db 
             dockerfile: Dockerfile
@@ -186,7 +192,7 @@ services:
             - db
 
     slack-notifications:
-        <<: *env
+        <<: [*env, *logrotate]
         build:
             context: ./kitsu-slack-notifications
             dockerfile: Dockerfile
@@ -199,7 +205,7 @@ services:
         restart: unless-stopped
 
     custom-events:
-        <<: *env
+        <<: [*env, *logrotate]
         build:
             context: ./kitsu-custom-events
             dockerfile: Dockerfile
@@ -221,7 +227,7 @@ services:
             - kitsu
 
     cleanup:
-        <<: *env
+        <<: [*env, *logrotate]
         build:
             context: ./kitsu-cleanup 
             dockerfile: Dockerfile
