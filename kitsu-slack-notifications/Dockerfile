@@ -4,9 +4,12 @@ FROM python:3.10-buster
 
 
 # Install rsync and cron
-RUN apk update && apk add --no-cache rsync tzdata
+# RUN apk update && apk add --no-cache rsync tzdata
+RUN apt update && apt install -y rsync tzdata && rm -rf /var/lib/apt/lists/*
+# RUN touch /var/log/slack-set-notifications.log
 
 RUN python3 -m venv /opt/venv
+RUN mkdir -p /etc/crontabs
 
 COPY ./requirements.txt requirements.txt
 COPY ./slack-set-notifications.sh /
