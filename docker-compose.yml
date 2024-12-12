@@ -199,6 +199,11 @@ services:
         container_name: ${COMPOSE_PROJECT_NAME:?}-slack-notifications
         networks:
             - internal
+        environment:
+            - SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN:?}
+            - GAZU_API_URL=${GAZU_API_URL:?}
+            - GAZU_LOGIN_EMAIL=${GAZU_LOGIN_EMAIL:?}
+            - GAZU_LOGIN_PASSWORD=${GAZU_LOGIN_PASSWORD:?}
         # volumes:
         #     - previews:/backup-source
         #     - nas-backup:/backup-dest
