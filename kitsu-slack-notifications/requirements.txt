@@ -1,3 +1,4 @@
 gazu==0.10.9
 python-dotenv==1.0.1
 slack_sdk==3.32.0
+ppprint==0.1.0
