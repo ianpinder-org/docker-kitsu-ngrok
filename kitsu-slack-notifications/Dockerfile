@@ -5,7 +5,7 @@ FROM python:3.10-buster
 
 # Install rsync and cron
 # RUN apk update && apk add --no-cache rsync tzdata
-RUN apt update && apt install -y rsync tzdata && rm -rf /var/lib/apt/lists/*
+RUN apt update && apt install -y rsync tzdata cron && rm -rf /var/lib/apt/lists/*
 # RUN touch /var/log/slack-set-notifications.log
 
 RUN python3 -m venv /opt/venv
