@@ -165,7 +165,8 @@ services:
             - internal
         volumes:
             - previews:/backup-source
-            - nas-backup:/backup-dest
+            # - nas-backup:/backup-dest
+            - /mnt/_GW_KitsuBackups:/backup-dest
         restart: unless-stopped
         
     backup-db:
@@ -184,7 +185,8 @@ services:
         networks:
             - internal
         volumes:
-            - nas-backup:/backup-dest
+            # - nas-backup:/backup-dest
+            - /mnt/_GW_KitsuBackups:/backup-dest
         # entrypoint: ["/bin/sh", "-c"]
         # command:
         #     "pg_dump -h db -U postgres -d zoudb > /opt/zou/backups/db_backup.sql"
@@ -241,7 +243,7 @@ services:
             - internal
         volumes:
             - previews:/backup-source
-            - nas-backup:/backup-dest
+            - /mnt/_GW_KitsuBackups:/backup-dest
             - tmp:/opt/zou/tmp
         restart: unless-stopped
 
@@ -256,13 +258,15 @@ volumes:
         name: ${COMPOSE_PROJECT_NAME:?}-tmp
     indexer:
         name: ${COMPOSE_PROJECT_NAME:?}-indexer
-    nas-backup:
-        name: ${COMPOSE_PROJECT_NAME:?}-nas-backup
-        driver: local
-        driver_opts:
-            type: cifs
-            o: username=${NAS_USER},password=${NAS_PASS},vers=3.0,rw
-            device: ${NAS_SHARED_VOLUME}
+    # nas-backup:
+    #     name: ${COMPOSE_PROJECT_NAME:?}-nas-backup
+    #     driver: local
+    #     driver_opts:
+    #         type: cifs
+    #         o: username=${NAS_USER},password=${NAS_PASS},vers=3.0,rw
+    #         device: ${NAS_SHARED_VOLUME}
+  
+
 
         
 networks:
