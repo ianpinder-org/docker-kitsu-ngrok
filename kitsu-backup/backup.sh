@@ -1,5 +1,5 @@
 #!/bin/sh
-echo "RUNING KITSU BACKUP PROCESSES..."
+echo "RUNNING KITSU BACKUP PROCESSES..."
 
 
 # Step 2: Rsync backup process
