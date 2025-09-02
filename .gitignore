@@ -9,5 +9,4 @@ zou/
 certs/**
 env
 .env
-env
 **/.DS_Store
