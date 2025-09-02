@@ -1,24 +1,22 @@
 #!/usr/bin/env bash
 
-SWD=$(cd $(dirname $0);echo $PWD)
+SWD=$(cd "$(dirname "$0")"; echo "$PWD")
 
 function get_kitsu_version() {
     if [[ $KITSU_VERSION == "latest" ]]; then
-        export KITSU_VERSION=`curl https://api.github.com/repos/cgwire/kitsu/commits | jq -r '.[].commit.message | select(. | test("[0-9]+(\\\\.[0-9]+)+"))?' | grep -m1 ""`
+        export KITSU_VERSION=$(curl https://api.github.com/repos/cgwire/kitsu/commits | jq -r '.[].commit.message | select(. | test("[0-9]+(\\\\.[0-9]+)+"))?' | grep -m1 "")
         echo "${GREEN}Set KITSU_VERSION to $KITSU_VERSION"
     fi
 }
 
-
-function get_zou_version(){
+function get_zou_version() {
     if [[ $ZOU_VERSION == "latest" ]]; then
-        export ZOU_VERSION=`curl https://api.github.com/repos/cgwire/zou/commits | jq -r '.[].commit.message | select(. | test("[0-9]+(\\\\.[0-9]+)+"))?' | grep -m1 ""`
+        export ZOU_VERSION=$(curl https://api.github.com/repos/cgwire/zou/commits | jq -r '.[].commit.message | select(. | test("[0-9]+(\\\\.[0-9]+)+"))?' | grep -m1 "")
         echo "${GREEN}Set ZOU_VERSION to $ZOU_VERSION"
     fi
 }
 
-
-function check_dependencies(){
+function check_dependencies() {
     failed=false
     if [ ! -e "$SWD/kitsu/Dockerfile" ]; then
         echo "${ERROR}Kitsu Dockerfile required"
@@ -36,76 +34,106 @@ function check_dependencies(){
         echo "${ERROR}Zou repo required"
         failed=true
     fi
-
     if $failed; then
         exit 1
     fi
 }
 
 function rebuild_custom_services() {
-    echo "${YELLOW}REBUILD CUSTOM CONTAINERS"
-    docker-compose build --no-cache backup
-    docker-compose build --no-cache backup-db
-    docker-compose build --no-cache custom-events
-    docker-compose build --no-cache slack-notifications
-    docker-compose build --no-cache cleanup
+    # Build only; do not decide about recreation here.
+    local CUST_BUILD_FLAGS=""
+    if $NO_CACHE; then
+        CUST_BUILD_FLAGS="--no-cache"
+    fi
+    COMPOSE_DOCKER_CLI_BUILD=1 DOCKER_BUILDKIT=1 dc build --pull $CUST_BUILD_FLAGS backup
+    COMPOSE_DOCKER_CLI_BUILD=1 DOCKER_BUILDKIT=1 dc build --pull $CUST_BUILD_FLAGS backup-db
+    COMPOSE_DOCKER_CLI_BUILD=1 DOCKER_BUILDKIT=1 dc build --pull $CUST_BUILD_FLAGS custom-events
+    COMPOSE_DOCKER_CLI_BUILD=1 DOCKER_BUILDKIT=1 dc build --pull $CUST_BUILD_FLAGS slack-notifications
+    COMPOSE_DOCKER_CLI_BUILD=1 DOCKER_BUILDKIT=1 dc build --pull $CUST_BUILD_FLAGS cleanup
+    DID_REBUILD_CUSTOM=true
 }
-
 
 function build_images() {
     echo "${MAGENTA}BUILD CONTAINERS"
-
     check_dependencies
+
+    BUILD_FLAGS="--force-rm --pull"
+    if $NO_CACHE; then
+        BUILD_FLAGS="$BUILD_FLAGS --no-cache"
+    fi
 
     if $DEVELOP; then
         COMPOSE_DOCKER_CLI_BUILD=1 DOCKER_BUILDKIT=1 \
-        dc -f docker-compose.yml -f docker-compose.develop.yml build --force-rm --pull
+        dc -f docker-compose.yml -f docker-compose.develop.yml build $BUILD_FLAGS
     else
-        command -v curl 1>/dev/null || { echo "${ERROR}curl required" && exit 1; }
-        command -v jq 1 >/dev/null || { echo "${ERROR}jq required" && exit 1; }
+        command -v curl 1>/dev/null || { echo "${ERROR}curl required"; exit 1; }
+        command -v jq 1>/dev/null    || { echo "${ERROR}jq required";   exit 1; }
 
         get_kitsu_version
         get_zou_version
         COMPOSE_DOCKER_CLI_BUILD=1 DOCKER_BUILDKIT=1 \
-        dc -f docker-compose.yml -f docker-compose.build.yml build --force-rm --pull
+        dc -f docker-compose.yml -f docker-compose.build.yml build $BUILD_FLAGS
     fi
+    DID_BUILD_MAIN=true
 }
-
 
 function compose_up() {
     echo "${YELLOW}START CONTAINERS"
+
+    local UP_FLAGS="-d"
+    local SHOULD_RECREATE=false
+
     if $DEVELOP ; then
+        # dev: no pull; recreate if we built anything
+        if $DID_BUILD_MAIN || $DID_REBUILD_CUSTOM; then
+            SHOULD_RECREATE=true
+        fi
+        if $SHOULD_RECREATE; then UP_FLAGS="--force-recreate -d"; fi
+
         dc -f docker-compose.yml \
-                       -f docker-compose.develop.yml \
-                       up -d
+           -f docker-compose.develop.yml \
+           up $UP_FLAGS
+
     elif $BUILD ; then
+        # local build path (prod + build files): no pull; recreate if we built
+        if $DID_BUILD_MAIN || $DID_REBUILD_CUSTOM; then
+            SHOULD_RECREATE=true
+        fi
+        if $SHOULD_RECREATE; then UP_FLAGS="--force-recreate -d"; fi
+
         dc -f docker-compose.yml \
-                       -f docker-compose.prod.yml \
-                       -f docker-compose.build.yml \
-                       up -d
+           -f docker-compose.prod.yml \
+           -f docker-compose.build.yml \
+           up $UP_FLAGS
+
     else
-        dc pull --include-deps
+        # prod path: pull first with the same files, then recreate to ensure fresh images are used
         dc -f docker-compose.yml \
-                       -f docker-compose.prod.yml \
-                       up -d
+           -f docker-compose.prod.yml \
+           pull --include-deps
+        PULLED_IMAGES=true
+        UP_FLAGS="--force-recreate -d"
+
+        dc -f docker-compose.yml \
+           -f docker-compose.prod.yml \
+           up $UP_FLAGS
     fi
+
     if [[ "${ENABLE_JOB_QUEUE}" != "True" ]]; then
         echo "${YELLOW}DISABLE ZOU ASYNC JOBS"
         dc stop zou-jobs
     fi
-    
+
     until dc exec -T db pg_isready ; do
         sleep 3
         echo "${YELLOW}Waiting for db..."
     done
 }
 
-
 function compose_down() {
     echo "${YELLOW}STOP CONTAINERS"
     dc down
 }
-
 
 function init_zou() {
     dbowner=postgres
@@ -113,10 +141,10 @@ function init_zou() {
 
     if $DEVELOP && ! $KEEP_DB; then
         echo "${MAGENTA}DROP DEV DB"
-        dc exec db  su - postgres -c "dropdb ${dbname}"
+        dc exec db su - postgres -c "dropdb ${dbname}"
     fi
 
-    if dc exec db psql -U ${dbowner} ${dbname} -c '' 2>&1; then
+    if dc exec db psql -U "${dbowner}" "${dbname}" -c '' 2>&1; then
         echo "${GREEN}UPGRADE ZOU"
         dc exec zou-app sh /upgrade_zou.sh
     else
@@ -131,7 +159,7 @@ function init_zou() {
 # ---------------------------- ARGS ----------------------------
 # --------------------------------------------------------------
 
-source $SWD/common.sh
+source "$SWD/common.sh"
 echo "${BLUE}PARSE ARGS"
 
 BUILD=false
@@ -149,13 +177,21 @@ case $1 in
     ;;
 esac
 
-export ENV_FILE=$SWD/env
+export ENV_FILE="$SWD/env"
 DEVELOP=false
 KEEP_DB=false
 REBUILD_CUSTOM=false
+NO_CACHE=false
+NO_DOWN=false
+
+# Track what actually happened, to decide recreation later
+DID_BUILD_MAIN=false
+DID_REBUILD_CUSTOM=false
+PULLED_IMAGES=false
+
 for i in "$@"; do
     case $i in
-        -e=* | --env=*)
+        -e=*|--env=*)
             export ENV_FILE="${i#*=}"
             echo "${CYAN}USE CUSTOM ENV FILE"
             shift
@@ -179,7 +215,17 @@ for i in "$@"; do
             echo "${MAGENTA}REBUILD CUSTOM IMAGES"
             shift
             ;;
-        -h | --help)
+        --no-cache)
+            NO_CACHE=true
+            echo "${MAGENTA}BUILD WITH --no-cache"
+            shift
+            ;;
+        --no-down)
+            NO_DOWN=true
+            echo "${MAGENTA}SKIP docker compose down"
+            shift
+            ;;
+        -h|--help)
             echo "
     Usage:
 
@@ -193,21 +239,22 @@ for i in "$@"; do
     Options:
         -e, --env=ENV_FILE      Set custom env file. If not set ./env is used
 
-            --develop           [local, down] Gives access to running code on the host. Clean DB every time it's rebuild.
+            --develop           [local, down] Gives access to running code on the host. Clean DB every time it's rebuilt.
             --keep-db           [local] Combined with '--develop'. Keep DB data.
-            --rebuild-custom    rebuild custom containers to ensure updates
+            --rebuild-custom    Rebuild custom containers (backup, backup-db, custom-events, slack-notifications, cleanup)
+            --no-cache          Add --no-cache to image builds (main and custom)
+            --no-down           Skip 'docker compose down' before (re)starting
 
         -h, --help              Show this help
                 "
             exit 0
-        ;;
+            ;;
         *)
             echo "${ERROR}Invalid flag ${i} // Use -h or --help to print help"
             exit 1
-        ;;
+            ;;
     esac
 done
-
 
 # --------------------------------------------------------------
 # ---------------------------- MAIN ----------------------------
@@ -218,18 +265,19 @@ if $KEEP_DB && ! $DEVELOP; then
     exit 1
 fi
 
-source_env ${ENV_FILE}
+source_env "${ENV_FILE}"
 
 if $DEVELOP; then
     export COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME}-dev"
 fi
 
 if $REBUILD_CUSTOM; then
-   
     rebuild_custom_services
 fi
 
-compose_down
+if ! $NO_DOWN; then
+    compose_down
+fi
 
 if ! $DOWN ; then
     if $BUILD ; then
